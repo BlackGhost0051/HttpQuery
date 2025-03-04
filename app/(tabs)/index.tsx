@@ -3,20 +3,70 @@ import { Button, TextInput, View, StyleSheet, Text, ScrollView, TouchableOpacity
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+import { useNavigation } from '@react-navigation/native';
+
+
+import axios from 'axios';
+
 export default function HomeScreen() {
+  const navigation = useNavigation();
+
+
+
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('GET');
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState('Headers');
   const [headers, setHeaders] = useState([{ key: '', value: '' }]);
+  const [body, setBody] = useState('');
+  const [responseData, setResponseData] = useState('');
 
   const scrollViewRef = useRef(null);
 
   const methods = ['GET', 'POST', 'PUT', 'DELETE'];
 
   const makeRequest = async () => {
-    // request logic
+    if (!url.trim()) {
+      console.error('URL cannot be empty.');
+      return;
+    }
+
+    if (method !== 'GET' && !body.trim()) {
+      console.error('Body cannot be empty for POST/PUT requests.');
+      return;
+    }
+
+    const validHeaders = headers.reduce((acc, { key, value }) => {
+      if (key.trim() && value.trim()) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+    const options = {
+      method,
+      url,
+      headers: Object.keys(validHeaders).length > 0 ? validHeaders : undefined,
+      data: method !== 'GET' && body.trim() ? body : undefined,
+    };
+
+    setLoading(true);
+    try {
+      const response = await axios(options);
+      if (response.status >= 200 && response.status < 300) {
+        console.log('Response:', response.data);
+        setResponseData(JSON.stringify(response.data, null, 2));
+      } else {
+        console.error('Failed request with status:', response.status);
+        setResponseData(`Error: Request failed with status ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error making request:', error);
+      setResponseData(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addHeader = () => {
@@ -38,7 +88,6 @@ export default function HomeScreen() {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === 'Headers') {
-      // Scroll to the headers section
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
   };
@@ -50,7 +99,7 @@ export default function HomeScreen() {
 
           <View style={styles.inputRow}>
             <TouchableOpacity style={styles.methodButton} onPress={() => setShowDropdown(!showDropdown)}>
-              <Text style={styles.methodText}>{method} ▼</Text>
+              <ThemedText style={styles.methodText}>{method} ▼</ThemedText>
             </TouchableOpacity>
 
             <TextInput
@@ -96,10 +145,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-              ref={scrollViewRef}
-              contentContainerStyle={styles.contentContainer}
-          >
+          <ScrollView ref={scrollViewRef} contentContainerStyle={styles.contentContainer}>
             <View style={styles.content}>
               {activeTab === 'Headers' ? (
                   <>
@@ -132,7 +178,13 @@ export default function HomeScreen() {
               ) : (
                   <>
                     <Text style={styles.sectionTitle}>Body</Text>
-                    <TextInput style={styles.bodyInput} multiline placeholder="Enter request body" />
+                    <TextInput
+                        style={styles.bodyInput}
+                        multiline
+                        placeholder="Enter request body"
+                        value={body}
+                        onChangeText={setBody}
+                    />
                   </>
               )}
             </View>
@@ -141,6 +193,16 @@ export default function HomeScreen() {
           <View style={styles.buttonContainer}>
             <Button title="Send" onPress={makeRequest} disabled={loading} />
           </View>
+
+          {/* Response Window */}
+          {responseData && (
+              <View style={styles.responseContainer}>
+                <Text style={styles.responseTitle}>Response:</Text>
+                <ScrollView style={styles.responseWindow}>
+                  <Text style={styles.responseText}>{responseData}</Text>
+                </ScrollView>
+              </View>
+          )}
         </ThemedView>
       </View>
   );
@@ -149,6 +211,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 50,
     margin: 10,
     padding: 16,
   },
@@ -284,5 +347,27 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 10,
+  },
+  responseContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 4,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
+  responseTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  responseWindow: {
+    maxHeight: 200,
+    marginTop: 5,
+  },
+  responseText: {
+    fontFamily: 'Courier New',
+    fontSize: 14,
+    whiteSpace: 'pre-wrap',
   },
 });
