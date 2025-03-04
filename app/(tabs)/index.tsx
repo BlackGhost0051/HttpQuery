@@ -7,10 +7,11 @@ import { useNavigation } from '@react-navigation/native';
 
 
 import axios from 'axios';
+import {useRouter} from "expo-router";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-
+  const router = useRouter();
 
 
   const [url, setUrl] = useState('');
@@ -56,14 +57,18 @@ export default function HomeScreen() {
       const response = await axios(options);
       if (response.status >= 200 && response.status < 300) {
         console.log('Response:', response.data);
-        setResponseData(JSON.stringify(response.data, null, 2));
+        // setResponseData(JSON.stringify(response.data, null, 2));
+        const responseString = JSON.stringify(response.data, null, 2);
+        router.push(`/response?response=${encodeURIComponent(responseString)}`);
       } else {
         console.error('Failed request with status:', response.status);
-        setResponseData(`Error: Request failed with status ${response.status}`);
+        // setResponseData(`Error: Request failed with status ${response.status}`);
+        router.push(`/response?response=${encodeURIComponent(`Error: Request failed with status ${response.status}`)}`);
       }
     } catch (error) {
       console.error('Error making request:', error);
-      setResponseData(`Error: ${error.message}`);
+      // setResponseData(`Error: ${error.message}`);
+      router.push(`/response?response=${encodeURIComponent(`Error: ${error.message}`)}`);
     } finally {
       setLoading(false);
     }
