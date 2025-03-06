@@ -1,17 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import { Button, TextInput, View, StyleSheet, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 import { useNavigation } from '@react-navigation/native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 import axios from 'axios';
-import {useRouter} from "expo-router";
+import {useRouter, useLocalSearchParams} from "expo-router";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const router = useRouter();
+  const params = useLocalSearchParams();
 
 
   const [url, setUrl] = useState('');
@@ -22,10 +25,44 @@ export default function HomeScreen() {
   const [headers, setHeaders] = useState([{ key: '', value: '' }]);
   const [body, setBody] = useState('');
   const [responseData, setResponseData] = useState('');
+  const [history, setHistory] = useState([]);
 
   const scrollViewRef = useRef(null);
 
   const methods = ['GET', 'POST', 'PUT', 'DELETE'];
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  useEffect(() => {
+    if (params.url) {
+      setUrl(decodeURIComponent(params.url));
+    }
+    if (params.method) {
+      setMethod(decodeURIComponent(params.method));
+    }
+    if (params.headers) {
+      setHeaders(JSON.parse(decodeURIComponent(params.headers)));
+    }
+    if (params.body) {
+      setBody(decodeURIComponent(params.body));
+    }
+  }, [params.url, params.method, params.headers, params.body]);
+
+  const loadHistory = async () => {
+    const storedHistory = await AsyncStorage.getItem('requestHistory');
+    if(storedHistory) {
+      setHistory(JSON.parse(storedHistory));
+    }
+  };
+
+  const saveToHistory = async (request) => {
+    const updatedHistory = [request, ...history].slice(0, 10); // Limit to 10 items
+    setHistory(updatedHistory);
+    await AsyncStorage.setItem('requestHistory', JSON.stringify(updatedHistory));
+  };
+
 
   const makeRequest = async () => {
     if (!url.trim()) {
@@ -59,6 +96,9 @@ export default function HomeScreen() {
         console.log('Response:', response.data);
         // setResponseData(JSON.stringify(response.data, null, 2));
         const responseString = JSON.stringify(response.data, null, 2);
+
+        await saveToHistory({ url, method, headers, body });
+
         router.push(`/response?response=${encodeURIComponent(responseString)}`);
       } else {
         console.error('Failed request with status:', response.status);
@@ -72,6 +112,13 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleHistoryClick = (item) => {
+    setUrl(item.url);
+    setMethod(item.method);
+    setHeaders(item.headers);
+    setBody(item.body || '');
   };
 
   const addHeader = () => {
