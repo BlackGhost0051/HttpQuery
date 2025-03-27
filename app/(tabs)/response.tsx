@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 
 export default function ResponseScreen() {
-    const { response } = useLocalSearchParams();
+    const { status, response } = useLocalSearchParams();
     const navigation = useNavigation();
 
     return (
@@ -11,6 +11,8 @@ export default function ResponseScreen() {
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
+
+            <Text style={styles.statusCode}>Status Code: {status || 'Unknown'}</Text>
 
             <ScrollView style={styles.responseBox}>
                 <Text style={styles.responseText}>{response || 'No response available'}</Text>
@@ -55,5 +57,11 @@ const styles = StyleSheet.create({
     responseText: {
         fontSize: 14,
         fontFamily: 'Courier New',
+    },
+    statusCode: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 10,
     },
 });

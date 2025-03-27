@@ -93,22 +93,25 @@ export default function HomeScreen() {
     try {
       const response = await axios(options);
       if (response.status >= 200 && response.status < 300) {
-        console.log('Response:', response.data);
+        // console.log('Response:', response.data);
         // setResponseData(JSON.stringify(response.data, null, 2));
         const responseString = JSON.stringify(response.data, null, 2);
 
         await saveToHistory({ url, method, headers, body });
 
-        router.push(`/response?response=${encodeURIComponent(responseString)}`);
+        // router.push(`/response?response=${encodeURIComponent(responseString)}`);
+        router.push(`/response?status=${response.status}&response=${encodeURIComponent(responseString)}`);
       } else {
         console.error('Failed request with status:', response.status);
         // setResponseData(`Error: Request failed with status ${response.status}`);
-        router.push(`/response?response=${encodeURIComponent(`Error: Request failed with status ${response.status}`)}`);
+        router.push(`/response?status=${response.status}&response=${encodeURIComponent(`Error: Request failed with status ${response.status}`)}`);
       }
     } catch (error) {
       console.error('Error making request:', error);
       // setResponseData(`Error: ${error.message}`);
-      router.push(`/response?response=${encodeURIComponent(`Error: ${error.message}`)}`);
+      // router.push(`/response?response=${encodeURIComponent(`Error: ${error.message}`)}`);
+      const errorMessage = `Error: ${error.message}`;
+      router.push(`/response?status=Error&response=${encodeURIComponent(errorMessage)}`);
     } finally {
       setLoading(false);
     }
