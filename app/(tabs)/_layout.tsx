@@ -8,6 +8,8 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -40,6 +42,14 @@ export default function TabLayout() {
                 tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
             }}
         />
+        <Tabs.Screen
+            name="response"
+            options={{
+                title: 'Response',
+                tabBarIcon: ({ color }) => <MaterialIcons size={28} name="terminal" color={color} />,
+            }}
+        />
+
     </Tabs>
   );
 }
